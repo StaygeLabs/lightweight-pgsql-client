@@ -3,7 +3,7 @@
   "displayName": "Lightweight PostgreSQL Client",
   "description": "A lightweight PostgreSQL client for VS Code. Direct database connection only - no third-party servers, no data collection, no telemetry. Your queries and data never leave your machine.",
   "version": "0.1.0",
-  "publisher": "steve",
+  "publisher": "STAYGELabs",
   "license": "MIT",
   "repository": {
     "type": "git",
