@@ -1,14 +1,19 @@
 {
   "name": "lightweight-pgsql-client",
   "displayName": "Lightweight PostgreSQL Client",
-  "description": "A lightweight PostgreSQL client for VS Code",
+  "description": "A lightweight PostgreSQL client for VS Code. Direct database connection only - no third-party servers, no data collection, no telemetry. Your queries and data never leave your machine.",
   "version": "0.1.0",
   "publisher": "steve",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/steve/lightweight-pgsql-client"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
   "keywords": [
@@ -283,7 +288,8 @@
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -297,6 +303,7 @@
     "esbuild": "^0.19.8",
     "eslint": "^8.55.0",
     "glob": "^10.3.10",
+    "husky": "^9.1.7",
     "mocha": "^10.2.0",
     "typescript": "^5.3.2"
   },
