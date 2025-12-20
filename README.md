@@ -15,12 +15,14 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 ## Features
 
 ### Connection Management
+
 - Save multiple database connections
 - Secure password storage using VS Code's Secret Storage
 - Connect/disconnect from the sidebar
 - Quick connect via connection string
 
 ### Query Execution
+
 - Execute SQL queries with `Cmd+Enter` (Mac) / `Ctrl+Enter` (Windows/Linux)
 - Document-specific connection binding
 - Auto-limit SELECT queries to 100 rows (with "View All" option)
@@ -28,6 +30,7 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 - Confirmation dialog for data modification queries (INSERT, UPDATE, DELETE, etc.)
 
 ### Schema Explorer
+
 - Browse schemas, tables, and views
 - View table structure, indexes, foreign keys, and constraints
 - View table DDL
@@ -35,6 +38,7 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 - Quick "SELECT TOP 100" query generation
 
 ### Query Results
+
 - View results in a data grid
 - Export to CSV or JSON
 - View selected rows as JSON
@@ -43,10 +47,12 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 - Save changes back to database
 
 ### Query History
+
 - Track executed queries
 - Re-open queries from history
 
 ### SQL Language Features
+
 - Auto-completion for tables and columns
 - Hover information for tables
 - SQL formatting
@@ -67,9 +73,9 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 
 ## Keyboard Shortcuts
 
-| Command | Mac | Windows/Linux |
-|---------|-----|---------------|
-| Execute Query | `Cmd+Enter` | `Ctrl+Enter` |
+| Command       | Mac         | Windows/Linux |
+| ------------- | ----------- | ------------- |
+| Execute Query | `Cmd+Enter` | `Ctrl+Enter`  |
 
 ## Requirements
 
@@ -83,13 +89,14 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 
 ## Known Issues
 
-See [GitHub Issues](https://github.com/steve/lightweight-pgsql-client/issues)
+See [GitHub Issues](https://github.com/StaygeLabs/lightweight-pgsql-client/issues)
 
 ## Release Notes
 
 ### 0.1.0
 
 Initial release:
+
 - Connection management with secure password storage
 - SQL query execution with document-specific connections
 - Schema explorer with table info view

@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/steve/lightweight-pgsql-client"
+    "url": "https://github.com/StaygeLabs/lightweight-pgsql-client"
   },
   "engines": {
     "vscode": "^1.85.0"
