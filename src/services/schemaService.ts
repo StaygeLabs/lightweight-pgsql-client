@@ -1,5 +1,5 @@
 import { ConnectionManager } from './connectionManager';
-import { TableInfo, ColumnDetail, IndexInfo, ForeignKeyInfo, ConstraintInfo, TableStats } from '../models/types';
+import { TableInfo, ColumnDetail, IndexInfo, ForeignKeyInfo, ConstraintInfo, TableStats, SessionInfo } from '../models/types';
 
 export class SchemaService {
   constructor(private connectionManager: ConnectionManager) {}
@@ -410,6 +410,89 @@ export class SchemaService {
     }
 
     return ddl;
+  }
+
+  /**
+   * Get active sessions from pg_stat_activity
+   */
+  async getSessions(connectionId?: string): Promise<SessionInfo[]> {
+    const sql = `
+      SELECT
+        pid,
+        datname as database,
+        usename as user,
+        application_name,
+        client_addr,
+        client_port,
+        backend_start,
+        state,
+        state_change,
+        query,
+        query_start,
+        wait_event_type,
+        wait_event
+      FROM pg_stat_activity
+      WHERE pid <> pg_backend_pid()
+        AND datname IS NOT NULL
+      ORDER BY
+        CASE state
+          WHEN 'active' THEN 1
+          WHEN 'idle in transaction' THEN 2
+          WHEN 'idle' THEN 3
+          ELSE 4
+        END,
+        query_start DESC NULLS LAST
+    `;
+
+    const rows = await this.query(sql, connectionId) as Array<{
+      pid: number;
+      database: string;
+      user: string;
+      application_name: string;
+      client_addr: string | null;
+      client_port: number | null;
+      backend_start: Date;
+      state: string;
+      state_change: Date | null;
+      query: string;
+      query_start: Date | null;
+      wait_event_type: string | null;
+      wait_event: string | null;
+    }>;
+
+    return rows.map(row => ({
+      pid: row.pid,
+      database: row.database,
+      user: row.user,
+      applicationName: row.application_name || '',
+      clientAddr: row.client_addr,
+      clientPort: row.client_port,
+      backendStart: row.backend_start,
+      state: row.state || 'unknown',
+      stateChange: row.state_change,
+      query: row.query || '',
+      queryStart: row.query_start,
+      waitEventType: row.wait_event_type,
+      waitEvent: row.wait_event,
+    }));
+  }
+
+  /**
+   * Terminate a session by PID
+   */
+  async terminateSession(pid: number, connectionId?: string): Promise<boolean> {
+    const sql = 'SELECT pg_terminate_backend($1) as terminated';
+    const rows = await this.query(sql, connectionId, [pid]) as Array<{ terminated: boolean }>;
+    return rows[0]?.terminated ?? false;
+  }
+
+  /**
+   * Cancel a query on a session by PID (less aggressive than terminate)
+   */
+  async cancelSession(pid: number, connectionId?: string): Promise<boolean> {
+    const sql = 'SELECT pg_cancel_backend($1) as cancelled';
+    const rows = await this.query(sql, connectionId, [pid]) as Array<{ cancelled: boolean }>;
+    return rows[0]?.cancelled ?? false;
   }
 
   private escapeString(str: string): string {

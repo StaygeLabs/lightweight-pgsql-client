@@ -2,6 +2,11 @@
 
 All notable changes to the "Lightweight PostgreSQL Client" extension will be documented in this file.
 
+## [0.1.1] - 2024-12-20
+
+### Added
+- Query cancellation support - cancel long-running queries via Cancel button or `PostgreSQL: Cancel Query` command
+
 ## [0.1.0] - 2024-12-20
 
 ### Added

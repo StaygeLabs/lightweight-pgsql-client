@@ -10,6 +10,7 @@ import { SqlHoverProvider } from './providers/hoverProvider';
 import { SqlFormattingProvider, SqlRangeFormattingProvider } from './providers/formatProvider';
 import { ResultsViewProvider } from './views/resultsPanel';
 import { TableInfoPanel } from './views/tableInfoPanel';
+import { SessionsPanel } from './views/sessionsPanel';
 import { connectCommand, executeQueryCommand } from './commands';
 import { ConnectionTreeItem } from './providers/connectionTreeProvider';
 import { QueryHistoryItem } from './models/types';
@@ -226,15 +227,9 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('pgsql.openHistoryQuery', async (item: QueryHistoryItem) => {
-      const connection = item.connectionId
-        ? connectionManager.getConnection(item.connectionId)
-        : undefined;
-      const connectionInfo = connection
-        ? `-- Connection: ${connection.config.name} (${connection.config.database})\n`
-        : '';
       const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
-        content: `${connectionInfo}${item.sql}\n`,
+        content: `${item.sql}\n`,
       });
       await vscode.window.showTextDocument(doc);
       if (item.connectionId && connectionManager.isConnected(item.connectionId)) {
@@ -275,11 +270,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (!item?.data?.schema || !item?.data?.table || !item?.data?.connectionId) {
         return;
       }
-      const connection = connectionManager.getConnection(item.data.connectionId);
-      const connectionInfo = connection
-        ? `-- Connection: ${connection.config.name} (${connection.config.database})\n`
-        : '';
-      const sql = `${connectionInfo}SELECT * FROM "${item.data.schema}"."${item.data.table}" LIMIT 100;\n`;
+      const sql = `SELECT * FROM "${item.data.schema}"."${item.data.table}" LIMIT 100;\n`;
       const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
         content: sql,
@@ -287,6 +278,61 @@ export function activate(context: vscode.ExtensionContext) {
       await vscode.window.showTextDocument(doc);
       if (item.data.connectionId) {
         documentConnectionTracker.associateDocumentWithConnection(doc, item.data.connectionId);
+      }
+    }),
+
+    vscode.commands.registerCommand('pgsql.cancelQuery', async () => {
+      if (queryExecutor.isQueryRunning()) {
+        const cancelled = await queryExecutor.cancelCurrentQuery();
+        if (cancelled) {
+          vscode.window.showInformationMessage('Query cancellation requested');
+        }
+      } else {
+        vscode.window.showInformationMessage('No query is currently running');
+      }
+    }),
+
+    vscode.commands.registerCommand('pgsql.showSessions', async () => {
+      const connections = connectionManager.getAllConnections();
+      if (connections.length === 0) {
+        vscode.window.showWarningMessage('No active connections. Please connect to a database first.');
+        return;
+      }
+
+      // If only one connection, use it directly
+      if (connections.length === 1) {
+        await SessionsPanel.show(
+          context.extensionUri,
+          schemaService,
+          connections[0].id,
+          connections[0].config.name
+        );
+        return;
+      }
+
+      // Let user select a connection
+      const items = connections.map(conn => ({
+        label: conn.config.name,
+        description: `${conn.config.host}:${conn.config.port}/${conn.config.database}`,
+        connectionId: conn.id,
+      }));
+
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select a connection to view sessions',
+      });
+
+      if (!selected) {
+        return;
+      }
+
+      const connection = connectionManager.getConnection(selected.connectionId);
+      if (connection) {
+        await SessionsPanel.show(
+          context.extensionUri,
+          schemaService,
+          connection.id,
+          connection.config.name
+        );
       }
     }),
   ];

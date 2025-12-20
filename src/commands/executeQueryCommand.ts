@@ -81,11 +81,11 @@ export async function executeQueryCommand(
       {
         location: vscode.ProgressLocation.Notification,
         title: `Executing on ${connection.config.name}...`,
-        cancellable: false,
+        cancellable: true,
       },
-      async () => {
-        // Use the document's connection ID
-        return await queryExecutor.execute(sql, connection.id);
+      async (progress, token) => {
+        // Use the document's connection ID, pass cancellation token
+        return await queryExecutor.execute(sql, connection.id, token);
       }
     );
 
@@ -98,6 +98,12 @@ export async function executeQueryCommand(
       hasMoreData,
     });
 
+    // Check if query was cancelled
+    if (result.error === 'Query cancelled by user') {
+      vscode.window.showInformationMessage('Query cancelled');
+      return;
+    }
+
     const message = result.error
       ? `Query failed: ${result.error}`
       : `[${connection.config.name}] ${result.rowCount} rows in ${result.duration}ms`;
@@ -109,6 +115,11 @@ export async function executeQueryCommand(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    // Don't show error for cancelled queries
+    if (message.includes('cancelled') || message.includes('57014')) {
+      vscode.window.showInformationMessage('Query cancelled');
+      return;
+    }
     vscode.window.showErrorMessage(`[${connection.config.name}] Query failed: ${message}`);
   }
 }

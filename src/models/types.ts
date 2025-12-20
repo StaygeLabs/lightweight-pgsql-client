@@ -91,3 +91,19 @@ export interface TableStats {
   lastVacuum?: Date;
   lastAnalyze?: Date;
 }
+
+export interface SessionInfo {
+  pid: number;
+  database: string;
+  user: string;
+  applicationName: string;
+  clientAddr: string | null;
+  clientPort: number | null;
+  backendStart: Date;
+  state: string;
+  stateChange: Date | null;
+  query: string;
+  queryStart: Date | null;
+  waitEventType: string | null;
+  waitEvent: string | null;
+}

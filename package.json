@@ -2,7 +2,7 @@
   "name": "lightweight-pgsql-client",
   "displayName": "Lightweight PostgreSQL Client",
   "description": "A lightweight PostgreSQL client for VS Code. Direct database connection only - no third-party servers, no data collection, no telemetry. Your queries and data never leave your machine.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "STAYGELabs",
   "license": "MIT",
   "repository": {
@@ -99,6 +99,18 @@
         "title": "Refresh",
         "category": "PostgreSQL",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "pgsql.cancelQuery",
+        "title": "Cancel Query",
+        "category": "PostgreSQL",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "pgsql.showSessions",
+        "title": "Show Active Sessions",
+        "category": "PostgreSQL",
+        "icon": "$(list-unordered)"
       }
     ],
     "viewsContainers": {
@@ -144,9 +156,19 @@
           "group": "navigation@1"
         },
         {
+          "command": "pgsql.cancelQuery",
+          "when": "resourceLangId == sql && pgsql.queryRunning",
+          "group": "navigation@2"
+        },
+        {
           "command": "pgsql.switchDocumentConnection",
           "when": "resourceLangId == sql",
-          "group": "navigation@2"
+          "group": "navigation@3"
+        },
+        {
+          "command": "pgsql.showSessions",
+          "when": "resourceLangId == sql",
+          "group": "navigation@4"
         }
       ],
       "view/title": [
@@ -287,7 +309,7 @@
     "compile": "tsc -p ./",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
-    "package": "vsce package",
+    "package": "vsce package --out build/",
     "publish": "vsce publish",
     "prepare": "husky"
   },

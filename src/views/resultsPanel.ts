@@ -11,6 +11,7 @@ export interface ResultsContext {
   editable?: boolean;
   originalSql?: string;
   hasMoreData?: boolean;
+  currentOffset?: number;
 }
 
 export class ResultsViewProvider implements vscode.WebviewViewProvider {
@@ -95,8 +96,8 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
         await this.showJsonDocument(message.json as string);
         break;
 
-      case 'viewAll':
-        await this.executeFullQuery();
+      case 'loadMore':
+        await this.loadMoreRows();
         break;
     }
   }
@@ -169,41 +170,76 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
     await vscode.window.showTextDocument(doc);
   }
 
-  private async executeFullQuery(): Promise<void> {
+  private async loadMoreRows(): Promise<void> {
     if (!this.queryExecutor || !this.currentContext?.originalSql || !this.currentContext?.connectionId) {
-      vscode.window.showErrorMessage('Cannot execute full query: missing context');
+      vscode.window.showErrorMessage('Cannot load more rows: missing context');
       return;
     }
 
+    // Current offset is the number of rows we already have
+    const currentOffset = this.currentContext.currentOffset ?? this.currentResult?.rows.length ?? 100;
+    const batchSize = 100;
+
     try {
+      // Build query with LIMIT and OFFSET
+      let sqlWithOffset = this.currentContext.originalSql.trim();
+      if (sqlWithOffset.endsWith(';')) {
+        sqlWithOffset = sqlWithOffset.slice(0, -1);
+      }
+      sqlWithOffset = `${sqlWithOffset} LIMIT ${batchSize} OFFSET ${currentOffset}`;
+
       const result = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Executing full query...',
+          title: `Loading more rows (offset ${currentOffset})...`,
           cancellable: false,
         },
         async () => {
           return await this.queryExecutor!.execute(
-            this.currentContext!.originalSql!,
+            sqlWithOffset,
             this.currentContext!.connectionId
           );
         }
       );
 
-      // Show result without the hasMoreData flag
-      this.show(result, this.currentContext.originalSql, this.currentConnectionName, {
+      if (result.error) {
+        vscode.window.showErrorMessage(`Failed to load more rows: ${result.error}`);
+        return;
+      }
+
+      // Append new rows to existing data
+      const newRows = result.rows;
+      const existingRows = this.currentResult?.rows ?? [];
+      const combinedRows = [...existingRows, ...newRows];
+
+      // Check if there might be more data
+      const hasMoreData = newRows.length >= batchSize;
+      const newOffset = currentOffset + newRows.length;
+
+      // Update current result with combined rows
+      this.currentResult = {
+        ...this.currentResult!,
+        rows: combinedRows,
+        rowCount: combinedRows.length,
+      };
+
+      // Update context
+      this.currentContext = {
         ...this.currentContext,
-        originalSql: undefined,
-        hasMoreData: false,
-      });
+        currentOffset: newOffset,
+        hasMoreData,
+      };
+
+      // Refresh the view
+      this.updateView();
 
       vscode.window.setStatusBarMessage(
-        `Full query: ${result.rowCount} rows in ${result.duration}ms`,
-        5000
+        `Loaded ${newRows.length} more rows (total: ${combinedRows.length})`,
+        3000
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(`Full query failed: ${message}`);
+      vscode.window.showErrorMessage(`Failed to load more rows: ${message}`);
     }
   }
 
@@ -599,6 +635,31 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
       color: var(--vscode-descriptionForeground);
       margin-top: 4px;
     }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      border-top: 1px solid var(--vscode-panel-border);
+      background: var(--vscode-editor-background);
+      position: sticky;
+      bottom: 0;
+    }
+    .pagination button {
+      min-width: 32px;
+    }
+    .pagination .page-info {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+    }
+    .pagination select {
+      background: var(--vscode-dropdown-background);
+      color: var(--vscode-dropdown-foreground);
+      border: 1px solid var(--vscode-dropdown-border);
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -631,8 +692,8 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
       ${connectionName ? `<span class="connection-badge">${this.escapeHtml(connectionName)}</span>` : ''}
       <span id="changesInfo" style="display: none;" class="changes-badge">0 changes</span>
       ${context?.hasMoreData ? `
-        <span class="more-data-badge">100+ rows</span>
-        <button class="view-all-btn" onclick="viewAllData()">View All</button>
+        <span class="more-data-badge">${result.rowCount}+ rows</span>
+        <button class="view-all-btn" onclick="loadMoreData()">View More</button>
       ` : `<span>${result.rowCount} rows</span>`}
       <span>${result.duration}ms</span>
     </div>
@@ -650,7 +711,23 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
       ? `<div class="error">${this.escapeHtml(result.error)}</div>`
       : result.rows.length === 0
         ? `<div class="empty-state">${result.rowCount > 0 ? `${result.rowCount} row(s) affected` : 'Query executed successfully. No rows returned.'}</div>`
-        : this.renderTable(rows, columns, isEditable, context?.primaryKeyColumns || [])
+        : `<div id="tableContainer"></div>
+           <div class="pagination" id="pagination" style="display: none;">
+             <button onclick="goToFirstPage()" title="First page">«</button>
+             <button onclick="goToPrevPage()" title="Previous page">‹</button>
+             <span class="page-info">
+               Page <input type="number" id="pageInput" min="1" style="width: 50px; text-align: center;" onchange="goToPage(this.value)"> of <span id="totalPages">1</span>
+             </span>
+             <button onclick="goToNextPage()" title="Next page">›</button>
+             <button onclick="goToLastPage()" title="Last page">»</button>
+             <select id="pageSizeSelect" onchange="changePageSize(this.value)">
+               <option value="100">100 rows</option>
+               <option value="500" selected>500 rows</option>
+               <option value="1000">1000 rows</option>
+               <option value="5000">5000 rows</option>
+             </select>
+             <span class="page-info">(<span id="rowRange"></span> of ${result.rowCount} rows)</span>
+           </div>`
   }
 
   <script>
@@ -669,6 +746,12 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
     let newRows = []; // { data: {}, tempId: number }
     let selectedRows = new Set();
     let nextTempId = -1;
+
+    // Pagination state
+    let currentPage = 1;
+    let pageSize = 500;
+    const totalRows = originalData.length;
+    const needsPagination = totalRows > 100;
 
     function updateUI() {
       const totalChanges = modifiedCells.size + deletedRows.size + newRows.length;
@@ -1003,8 +1086,8 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
       vscode.postMessage({ type: 'export', format });
     }
 
-    function viewAllData() {
-      vscode.postMessage({ type: 'viewAll' });
+    function loadMoreData() {
+      vscode.postMessage({ type: 'loadMore' });
     }
 
     function copySql() {
@@ -1111,7 +1194,156 @@ export class ResultsViewProvider implements vscode.WebviewViewProvider {
       }
     });
 
+    // Pagination functions
+    function getTotalPages() {
+      return Math.ceil(totalRows / pageSize);
+    }
+
+    function renderTable() {
+      const container = document.getElementById('tableContainer');
+      if (!container) return;
+
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, totalRows);
+      const pageRows = currentData.slice(startIdx, endIdx);
+
+      let html = '<div class="table-container"><table><thead><tr>';
+      html += '<th class="row-checkbox"></th><th class="row-num">#</th>';
+      columns.forEach(col => {
+        const isPk = primaryKeyColumns.includes(col.name);
+        html += '<th class="' + (isPk ? 'pk-column' : '') + '" title="' + escapeHtml(col.dataType) + (isPk ? ' (Primary Key)' : '') + '">' + (isPk ? '🔑 ' : '') + escapeHtml(col.name) + '</th>';
+      });
+      html += '</tr></thead><tbody>';
+
+      pageRows.forEach((row, pageIdx) => {
+        const actualIdx = startIdx + pageIdx;
+        const isDeleted = deletedRows.has(actualIdx);
+        html += '<tr data-row="' + actualIdx + '"' + (isDeleted ? ' class="deleted"' : '') + '>';
+        html += '<td class="row-checkbox"><input type="checkbox" ' + (selectedRows.has(actualIdx) ? 'checked' : '') + ' onchange="toggleRowSelection(' + actualIdx + ', this)"></td>';
+        html += '<td class="row-num">' + (actualIdx + 1) + '</td>';
+        columns.forEach(col => {
+          const value = row[col.name];
+          const cellContent = formatCellContent(value);
+          const isModified = modifiedCells.has(getCellKey(actualIdx, col.name));
+          if (isEditable) {
+            html += '<td class="editable' + (isModified ? ' modified' : '') + '" data-col="' + col.name + '" ondblclick="handleCellEdit(this, ' + actualIdx + ', \\'' + col.name + '\\')">' + cellContent + '</td>';
+          } else {
+            html += '<td title="' + escapeAttr(formatTitle(value)) + '">' + cellContent + '</td>';
+          }
+        });
+        html += '</tr>';
+      });
+
+      // Add new rows at the end if on last page
+      if (currentPage === getTotalPages() || totalRows === 0) {
+        newRows.forEach(row => {
+          html += '<tr class="new-row" data-temp-id="' + row.tempId + '">';
+          html += '<td class="row-checkbox"><input type="checkbox" onchange="toggleNewRowSelection(' + row.tempId + ', this)"></td>';
+          html += '<td class="row-num">*</td>';
+          columns.forEach(col => {
+            const value = row.data[col.name];
+            const cellContent = formatCellContent(value);
+            html += '<td class="editable" data-col="' + col.name + '" ondblclick="handleCellEdit(this, ' + row.tempId + ', \\'' + col.name + '\\', true)">' + cellContent + '</td>';
+          });
+          html += '</tr>';
+        });
+      }
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+
+      // Update pagination UI
+      updatePaginationUI();
+    }
+
+    function formatCellContent(value) {
+      if (value === null || value === undefined) {
+        return '<span class="null">NULL</span>';
+      }
+      if (typeof value === 'boolean') {
+        return '<span class="boolean">' + value + '</span>';
+      }
+      if (typeof value === 'number') {
+        return '<span class="number">' + value + '</span>';
+      }
+      if (typeof value === 'object') {
+        return '<span class="json">' + escapeHtml(JSON.stringify(value)) + '</span>';
+      }
+      return escapeHtml(String(value));
+    }
+
+    function formatTitle(value) {
+      if (value === null || value === undefined) return 'NULL';
+      if (typeof value === 'object') return JSON.stringify(value, null, 2);
+      return String(value);
+    }
+
+    function escapeAttr(text) {
+      return String(text).replace(/"/g, '&quot;').replace(/\\n/g, '&#10;');
+    }
+
+    function updatePaginationUI() {
+      const pagination = document.getElementById('pagination');
+      const totalPages = getTotalPages();
+
+      if (needsPagination && pagination) {
+        pagination.style.display = 'flex';
+        document.getElementById('pageInput').value = currentPage;
+        document.getElementById('pageInput').max = totalPages;
+        document.getElementById('totalPages').textContent = totalPages;
+
+        const startRow = (currentPage - 1) * pageSize + 1;
+        const endRow = Math.min(currentPage * pageSize, totalRows);
+        document.getElementById('rowRange').textContent = startRow + '-' + endRow;
+      }
+    }
+
+    function goToFirstPage() {
+      if (currentPage !== 1) {
+        currentPage = 1;
+        renderTable();
+      }
+    }
+
+    function goToPrevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    }
+
+    function goToNextPage() {
+      if (currentPage < getTotalPages()) {
+        currentPage++;
+        renderTable();
+      }
+    }
+
+    function goToLastPage() {
+      const totalPages = getTotalPages();
+      if (currentPage !== totalPages) {
+        currentPage = totalPages;
+        renderTable();
+      }
+    }
+
+    function goToPage(page) {
+      const pageNum = parseInt(page);
+      const totalPages = getTotalPages();
+      if (pageNum >= 1 && pageNum <= totalPages && pageNum !== currentPage) {
+        currentPage = pageNum;
+        renderTable();
+      }
+    }
+
+    function changePageSize(size) {
+      pageSize = parseInt(size);
+      currentPage = 1;
+      renderTable();
+    }
+
     // Initialize
+    renderTable();
     updateUI();
   </script>
 </body>
