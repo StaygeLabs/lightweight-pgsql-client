@@ -8,9 +8,10 @@
 4. [Schema Explorer](#schema-explorer)
 5. [Query Results](#query-results)
 6. [Data Editing](#data-editing)
-7. [Query History](#query-history)
-8. [Keyboard Shortcuts](#keyboard-shortcuts)
-9. [Settings](#settings)
+7. [Session Management](#session-management)
+8. [Query History](#query-history)
+9. [Keyboard Shortcuts](#keyboard-shortcuts)
+10. [Settings](#settings)
 
 ---
 
@@ -111,8 +112,17 @@ Each SQL document can have its own connection:
 ### Auto LIMIT
 
 - SELECT queries without LIMIT automatically get `LIMIT 100` added
-- If results are 100 rows, "100+ rows" indicator and **View All** button appear
-- Click **View All** to fetch all data
+- If results are 100 rows, "100+ rows" indicator and **View More** button appear
+- Click **View More** to load next 100 rows incrementally
+- Button disappears when all data is loaded
+
+### Query Cancellation
+
+You can cancel a long-running query:
+
+1. **Cancel Button**: Click the stop button (■) in the editor title bar (appears only when query is running)
+2. **Command Palette**: `PostgreSQL: Cancel Query`
+3. The query is cancelled using PostgreSQL's `pg_cancel_backend()` function
 
 ### Multiple SQL Statements
 
@@ -180,6 +190,16 @@ Results are displayed in the bottom panel after query execution:
 - **Row count**: Number of rows returned
 - **Execution time**: Query execution time (ms)
 
+### Pagination
+
+For large result sets (more than 100 rows), pagination is enabled:
+
+- Navigate with **First**, **Previous**, **Next**, **Last** buttons
+- Jump to specific page by entering page number
+- Change page size (100, 500, 1000, 5000 rows per page)
+- Shows current row range (e.g., "1-500 of 90000 rows")
+- Efficiently handles very large result sets (90,000+ rows)
+
 ### Export Data
 
 - **CSV**: Export as CSV file
@@ -245,6 +265,40 @@ Results are displayed in the bottom panel after query execution:
 ### Discard Changes
 
 - **Discard** button: Cancel all changes
+
+---
+
+## Session Management
+
+View and manage active database sessions.
+
+### Open Sessions Panel
+
+1. Click the sessions button in the editor title bar (when SQL file is open)
+2. Or use Command Palette: `PostgreSQL: Show Active Sessions`
+3. If multiple connections exist, select which connection to view
+
+### Sessions Panel Features
+
+- **Session List**: Shows all active sessions with PID, database, user, application, client, state, duration, and query
+- **Status Badges**: Total sessions, Active, Idle, Idle in Transaction counts
+- **Auto-refresh**: Enable auto-refresh with 5s, 10s, 30s, or 60s intervals
+
+### Session Actions
+
+- **Cancel Query**: Cancel the running query on a session (uses `pg_cancel_backend()`)
+  - Only available for sessions in "active" state
+- **Kill Session**: Terminate a session forcefully (uses `pg_terminate_backend()`)
+  - Use with caution - forcefully closes the connection
+- **Copy Query**: Copy the currently running query to clipboard
+
+### Session States
+
+| State | Description |
+|-------|-------------|
+| active | Currently executing a query |
+| idle | Connected but not executing |
+| idle in transaction | In a transaction block, waiting for commands |
 
 ---
 

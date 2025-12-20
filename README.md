@@ -25,7 +25,8 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 
 - Execute SQL queries with `Cmd+Enter` (Mac) / `Ctrl+Enter` (Windows/Linux)
 - Document-specific connection binding
-- Auto-limit SELECT queries to 100 rows (with "View All" option)
+- Auto-limit SELECT queries to 100 rows (with "View More" for incremental loading)
+- Cancel long-running queries with Cancel button or `PostgreSQL: Cancel Query` command
 - SQL comment stripping before execution
 - Confirmation dialog for data modification queries (INSERT, UPDATE, DELETE, etc.)
 
@@ -40,11 +41,19 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 ### Query Results
 
 - View results in a data grid
+- Pagination for large result sets (efficiently handles 90,000+ rows)
 - Export to CSV or JSON
 - View selected rows as JSON
 - Edit data inline (with NULL button support)
 - Add/delete rows
 - Save changes back to database
+
+### Session Management
+
+- View active database sessions
+- Cancel running queries (pg_cancel_backend)
+- Terminate sessions (pg_terminate_backend)
+- Auto-refresh with configurable interval
 
 ### Query History
 
@@ -92,6 +101,17 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 See [GitHub Issues](https://github.com/StaygeLabs/lightweight-pgsql-client/issues)
 
 ## Release Notes
+
+### 0.1.2
+
+- Session management panel - view active sessions, cancel queries, terminate sessions
+- Cancel button in editor title bar (shows only when query is running)
+- Pagination for large result sets - efficiently handles 90,000+ rows
+- "View More" button for incremental loading (100 rows at a time)
+
+### 0.1.1
+
+- Query cancellation support
 
 ### 0.1.0
 
