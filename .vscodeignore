@@ -1,0 +1,16 @@
+.vscode/**
+.claude/**
+src/**
+out/**
+node_modules/**
+.gitignore
+*.ts
+tsconfig.json
+esbuild.js
+*.map
+.eslintrc*
+.prettierrc*
+CLAUDE.md
+coverage/**
+.nyc_output/**
+*.log

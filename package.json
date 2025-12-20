@@ -1,0 +1,306 @@
+{
+  "name": "lightweight-pgsql-client",
+  "displayName": "Lightweight PostgreSQL Client",
+  "description": "A lightweight PostgreSQL client for VS Code",
+  "version": "0.1.0",
+  "publisher": "steve",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "postgresql",
+    "postgres",
+    "sql",
+    "database"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pgsql.connect",
+        "title": "Connect to PostgreSQL",
+        "category": "PostgreSQL"
+      },
+      {
+        "command": "pgsql.disconnect",
+        "title": "Disconnect",
+        "category": "PostgreSQL"
+      },
+      {
+        "command": "pgsql.executeQuery",
+        "title": "Execute Query",
+        "category": "PostgreSQL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "pgsql.newQuery",
+        "title": "New Query",
+        "category": "PostgreSQL",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "pgsql.viewTableInfo",
+        "title": "View Table Info",
+        "category": "PostgreSQL",
+        "icon": "$(info)"
+      },
+      {
+        "command": "pgsql.copyTableName",
+        "title": "Copy Table Name",
+        "category": "PostgreSQL"
+      },
+      {
+        "command": "pgsql.selectTop100",
+        "title": "SELECT TOP 100",
+        "category": "PostgreSQL"
+      },
+      {
+        "command": "pgsql.switchDocumentConnection",
+        "title": "Switch Document Connection",
+        "category": "PostgreSQL",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "pgsql.connectItem",
+        "title": "Connect",
+        "category": "PostgreSQL",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "pgsql.disconnectItem",
+        "title": "Disconnect",
+        "category": "PostgreSQL",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "pgsql.deleteConnection",
+        "title": "Delete Connection",
+        "category": "PostgreSQL",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "pgsql.editConnection",
+        "title": "Edit Connection",
+        "category": "PostgreSQL",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "pgsql.refreshConnections",
+        "title": "Refresh",
+        "category": "PostgreSQL",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pgsql-explorer",
+          "title": "PostgreSQL",
+          "icon": "$(database)"
+        }
+      ],
+      "panel": [
+        {
+          "id": "pgsql-results",
+          "title": "Query Results",
+          "icon": "$(table)"
+        }
+      ]
+    },
+    "views": {
+      "pgsql-explorer": [
+        {
+          "id": "pgsql.connections",
+          "name": "Connections"
+        },
+        {
+          "id": "pgsql.queryHistory",
+          "name": "Query History"
+        }
+      ],
+      "pgsql-results": [
+        {
+          "id": "pgsql.resultsView",
+          "name": "Results",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "pgsql.executeQuery",
+          "when": "resourceLangId == sql",
+          "group": "navigation@1"
+        },
+        {
+          "command": "pgsql.switchDocumentConnection",
+          "when": "resourceLangId == sql",
+          "group": "navigation@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "pgsql.connect",
+          "when": "view == pgsql.connections",
+          "group": "navigation@1"
+        },
+        {
+          "command": "pgsql.refreshConnections",
+          "when": "view == pgsql.connections",
+          "group": "navigation@2"
+        },
+        {
+          "command": "pgsql.newQuery",
+          "when": "view == pgsql.connections",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pgsql.connectItem",
+          "when": "view == pgsql.connections && viewItem == connection-disconnected",
+          "group": "inline"
+        },
+        {
+          "command": "pgsql.disconnectItem",
+          "when": "view == pgsql.connections && viewItem == connection-connected",
+          "group": "inline"
+        },
+        {
+          "command": "pgsql.connectItem",
+          "when": "view == pgsql.connections && viewItem == connection-disconnected",
+          "group": "0_connection@1"
+        },
+        {
+          "command": "pgsql.disconnectItem",
+          "when": "view == pgsql.connections && viewItem == connection-connected",
+          "group": "0_connection@1"
+        },
+        {
+          "command": "pgsql.editConnection",
+          "when": "view == pgsql.connections && viewItem =~ /^connection/",
+          "group": "0_connection@2"
+        },
+        {
+          "command": "pgsql.deleteConnection",
+          "when": "view == pgsql.connections && viewItem =~ /^connection/",
+          "group": "0_connection@3"
+        },
+        {
+          "command": "pgsql.viewTableInfo",
+          "when": "view == pgsql.connections && viewItem == table",
+          "group": "inline"
+        },
+        {
+          "command": "pgsql.viewTableInfo",
+          "when": "view == pgsql.connections && viewItem == table",
+          "group": "1_info@1"
+        },
+        {
+          "command": "pgsql.viewTableInfo",
+          "when": "view == pgsql.connections && viewItem == view",
+          "group": "inline"
+        },
+        {
+          "command": "pgsql.viewTableInfo",
+          "when": "view == pgsql.connections && viewItem == view",
+          "group": "1_info@1"
+        },
+        {
+          "command": "pgsql.selectTop100",
+          "when": "view == pgsql.connections && viewItem == table",
+          "group": "2_query@1"
+        },
+        {
+          "command": "pgsql.selectTop100",
+          "when": "view == pgsql.connections && viewItem == view",
+          "group": "2_query@1"
+        },
+        {
+          "command": "pgsql.copyTableName",
+          "when": "view == pgsql.connections && viewItem == table",
+          "group": "3_copy@1"
+        },
+        {
+          "command": "pgsql.copyTableName",
+          "when": "view == pgsql.connections && viewItem == view",
+          "group": "3_copy@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "PostgreSQL Client",
+      "properties": {
+        "pgsql.maxRows": {
+          "type": "number",
+          "default": 1000,
+          "description": "Maximum number of rows to fetch"
+        },
+        "pgsql.queryTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Query timeout in milliseconds"
+        },
+        "pgsql.connections": {
+          "type": "array",
+          "default": [],
+          "description": "Saved database connections"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "sql",
+        "extensions": [
+          ".sql",
+          ".pgsql"
+        ]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "pgsql.executeQuery",
+        "key": "cmd+enter",
+        "mac": "cmd+enter",
+        "win": "ctrl+enter",
+        "linux": "ctrl+enter",
+        "when": "editorTextFocus && editorLangId == sql"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "compile": "tsc -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.9",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.55.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
