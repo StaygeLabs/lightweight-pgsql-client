@@ -24,3 +24,7 @@ coverage/
 # Misc
 *.swp
 *.swo
+
+.claude
+.husky
+CLAUDE.md
