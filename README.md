@@ -151,6 +151,14 @@ See [GitHub Issues](https://github.com/StaygeLabs/lightweight-pgsql-client/issue
 
 ## Release Notes
 
+### 0.1.3
+
+- Added extension icon
+- Added screenshots to README
+- Documented AI coding assistant compatibility (Cursor, Antigravity, etc.)
+- Added Open VSX installation instructions
+- Added VS Code Marketplace and Open VSX badges
+
 ### 0.1.2
 
 - Session management panel - view active sessions, cancel queries, terminate sessions
