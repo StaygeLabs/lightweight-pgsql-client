@@ -1,6 +1,23 @@
-# Lightweight PostgreSQL Client
+<p align="center">
+  <img src="images/symbol.png" alt="Lightweight PostgreSQL Client" width="128">
+</p>
 
-A lightweight and fast PostgreSQL client extension for Visual Studio Code.
+<h1 align="center">Lightweight PostgreSQL Client</h1>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=STAYGELabs.lightweight-pgsql-client"><img src="https://img.shields.io/visual-studio-marketplace/i/STAYGELabs.lightweight-pgsql-client?label=VS%20Code%20Marketplace&color=blue" alt="VS Code Marketplace"></a>
+  <a href="https://open-vsx.org/extension/STAYGELabs/lightweight-pgsql-client"><img src="https://img.shields.io/open-vsx/dt/STAYGELabs/lightweight-pgsql-client?label=Open%20VSX&color=purple" alt="Open VSX"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  A lightweight and fast PostgreSQL client extension for Visual Studio Code.
+</p>
+
+## Screenshots
+
+![Query Execution](images/screenshot-query.png)
+![Schema Explorer](images/screenshot-explorer.png)
 
 ## Why Lightweight PostgreSQL Client?
 
@@ -11,6 +28,12 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 - **Direct connection only** — Connects directly from your machine to your database. No third-party servers, no proxies, no middlemen.
 - **Your data stays yours** — Zero data collection, zero telemetry, zero external API calls. Your queries and data never leave your local environment.
 - **Secure credential storage** — Passwords are stored in VS Code's built-in Secret Storage, not in plain text config files.
+
+### AI-Powered SQL Writing
+
+- **Works with AI coding assistants** — Fully compatible with Cursor, Antigravity and other AI-powered editors built on VS Code.
+- **Leverage AI autocomplete** — Write SQL queries faster with AI-powered code completion and suggestions.
+- **Stay in your workflow** — No need to switch between tools. Write, execute, and iterate on queries all in one place.
 
 ## Features
 
@@ -70,6 +93,32 @@ A lightweight and fast PostgreSQL client extension for Visual Studio Code.
 
 - **Quick Start**: [English](docs/quick-start.en.md) | [한국어](docs/quick-start.ko.md)
 - **User Manual**: [English](docs/user-manual.en.md) | [한국어](docs/user-manual.ko.md)
+
+## Installation
+
+### From VS Code Marketplace (VSCode)
+
+1. Open VS Code
+2. Go to Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`)
+3. Search for "Lightweight PostgreSQL Client"
+4. Click Install
+
+Or install directly: [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=STAYGELabs.lightweight-pgsql-client)
+
+### From Open VSX (for Cursor, Antigravity, etc.)
+
+1. Open VSCodium or compatible editor
+2. Go to Extensions
+3. Search for "Lightweight PostgreSQL Client"
+4. Click Install
+
+Or install directly: [Open VSX Registry](https://open-vsx.org/extension/STAYGELabs/lightweight-pgsql-client)
+
+### From VSIX File
+
+```bash
+code --install-extension lightweight-pgsql-client-x.x.x.vsix
+```
 
 ## Usage
 
